@@ -13,7 +13,8 @@ Direction :: enum {
 
 Rotation :: struct {
     direction: Direction,
-    clicks: u8
+    clicks: u8,
+    full_rotations: u64
 }
 
 Parse_Error :: enum {
@@ -46,38 +47,47 @@ parse_rotation :: proc(record: string) -> (Rotation, Parse_Error) {
     if !ok {
         return Rotation{}, .BadAmount
     }
+
+    full_rotations := u64(clicks / RANGE)
     clicks = clicks % RANGE
 
     rotation := Rotation {
         direction = direction,
-        clicks = u8(clicks)
+        clicks = u8(clicks),
+        full_rotations = full_rotations
     }
     return rotation, .None
 }
 
-rotate :: proc(position: u8, rotation: Rotation) -> u8 {
-    offset: u8 = position
+rotate :: proc(position: u8, rotation: Rotation) -> (u8, bool) {
+    rotated_position: u8
+    overflow: bool
 
     #partial switch rotation.direction {
     case .Left:
-        offset = (offset + RANGE - rotation.clicks % RANGE) % RANGE
+        overflow = rotation.clicks > position
+        rotated_position = (position + RANGE - rotation.clicks % RANGE) % RANGE
 
     case .Right:
-        offset = (offset + rotation.clicks) % RANGE
+        overflow = (position + rotation.clicks) >= RANGE
+        rotated_position = (position + rotation.clicks) % RANGE
     }
 
-    return offset
+    return rotated_position, overflow
 }
 
 crack_password :: proc(rotations: []Rotation) -> u64 {
     position: u8 = START_STEP
     zeroes:   u64 = 0
+    overflow: bool
 
     for rotation in rotations {
-        position = rotate(position, rotation)
-        if position == 0 {
-            zeroes = zeroes + 1
+        position, overflow = rotate(position, rotation)
+        if position == 0 || overflow {
+            zeroes += 1
         }
+
+        zeroes += rotation.full_rotations
     }
 
     return zeroes
