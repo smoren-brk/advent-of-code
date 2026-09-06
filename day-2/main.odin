@@ -4,6 +4,7 @@ import "core:os"
 import "core:fmt"
 import "core:strings"
 import "core:strconv"
+import "core:math"
 
 Range :: struct {
     start: int,
@@ -36,9 +37,11 @@ halve :: proc(number: string) -> int {
 
 self_similar :: proc(number: string) -> int {
     og := halve(number)
-    magnitude := (len(number) / 2) * 10 + 1
+    og_len := f32(len(number) / 2)
 
-    imitation := og * magnitude
+    magnitude := math.pow(10.0, og_len) + 1
+
+    imitation := og * int(magnitude)
     integral, _ := strconv.parse_int(number)
 
     if imitation != integral do return 0
