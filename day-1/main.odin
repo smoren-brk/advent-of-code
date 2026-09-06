@@ -65,7 +65,7 @@ rotate :: proc(position: u8, rotation: Rotation) -> (u8, bool) {
 
     #partial switch rotation.direction {
     case .Left:
-        overflow = rotation.clicks > position
+        overflow = rotation.clicks >= position && position != 0
         rotated_position = (position + RANGE - rotation.clicks % RANGE) % RANGE
 
     case .Right:
@@ -82,12 +82,14 @@ crack_password :: proc(rotations: []Rotation) -> u64 {
     overflow: bool
 
     for rotation in rotations {
-        position, overflow = rotate(position, rotation)
-        if position == 0 || overflow {
-            zeroes += 1
-        }
+        if rotation.clicks > 0 {
+            position, overflow = rotate(position, rotation)
+            if position == 0 || overflow {
+                zeroes += 1
+            }
 
-        zeroes += rotation.full_rotations
+            zeroes += rotation.full_rotations
+        }
     }
 
     return zeroes
